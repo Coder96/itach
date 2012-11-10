@@ -1,4 +1,4 @@
-itach
-=====
+mmpc
+====
 
-This will alow use of the Global Cach IP2IP device as a ir blaster with mythtv to control set top boxes.
+My mythtv rss media downloader with web interface. This program downloads media from the internet ad adds them to you recorded list.

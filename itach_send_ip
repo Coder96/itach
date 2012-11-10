@@ -1,0 +1,253 @@
+#!/usr/bin/perl -w
+
+#use strict;
+use Socket;
+use FileHandle;
+use Switch;
+
+my $Logging = 0;
+my $SendIR_1 = 'sendir,1:';
+my $SendIR_2 = ',1,37764,1,1,';
+my $DevicePort =  4998;
+my $DeviceIP = '';
+my $MyPath					= $ARGV[0];
+my $inDeviceID    	= $ARGV[1];
+my $inInterfaceID 	= $ARGV[2];
+my $STBID     	    	= $ARGV[3];
+my $inCommand   = $ARGV[4];
+my @Commands;
+######################################################################################################
+#
+# One item per character that can be sent. 
+#
+my	$ir_0 = '';
+my	$ir_1 = '';
+my	$ir_2 = '';
+my	$ir_3 = '';
+my	$ir_4 = '';
+my	$ir_5 = '';
+my	$ir_6 = '';
+my	$ir_7 = '';
+my	$ir_8 = '';
+my	$ir_9 = '';
+my	$ir_Decimal = '';
+my $ir_Eject = '';      # Did testing with a dvd player. Nice thunk when it worked.
+######################################################################################################
+#
+#
+#
+my $CommandToSend = '';
+
+Log("
+Path:            $MyPath
+Device ID:    $inDeviceID
+Interface ID: $inInterfaceID
+STB ID:	      $STBID
+Command:   $inCommand");
+
+GetDeviceID();
+
+GetSTB();
+
+#BuildCommand();
+BuildCommand2();
+
+#SendCommand();
+SendCommand2();
+
+exit();
+
+
+######################################################################################################
+#
+#  Get the IP for the infrared box
+#
+sub GetDeviceID{
+	
+	my $deviceidfile = $MyPath.'/deviceid.txt';
+	if(-e $deviceidfile){	
+#		require $deviceidfile;
+		open(DeviceID, "<$deviceidfile");
+		my @Devicess = <DeviceID>;
+		foreach $Devices (@Devicess){
+			chomp($Devices);
+			my($id, $ip) = split /=/ ,$Devices;
+			if($inDeviceID =~ /$id/){
+				$DeviceIP = $ip;
+				Log("Using Device IP $DeviceIP");
+			}
+		}
+	} else {
+		Log("File $deviceidfile not found.");
+		exit(0);
+	}
+	unless($DeviceIP){
+		Log("Device ID $inDeviceID not found in $deviceidfile file");
+	}
+}
+######################################################################################################
+#
+# Get the IR codes for the set top box.
+#
+sub GetSTB{
+	my $stbfile = "$MyPath/stbdefines/$STBID";
+	if(-e $stbfile){
+#	  require $stbfile;
+		open(STBf, "<$stbfile");
+		my @STBs = <STBf>;
+		foreach $STB (@STBs){
+			chomp($STB);
+			my ($id, $comm) = split /=/ , $STB;
+			if(substr($id,0,1) !~ /#/){
+				switch($id){
+					case 0 {$ir_0 = $comm}
+					case 1 {$ir_1 = $comm}
+					case 2 {$ir_2 = $comm}
+					case 3 {$ir_3 = $comm}
+					case 4 {$ir_4 = $comm}
+					case 5 {$ir_5 = $comm}
+					case 6 {$ir_6 = $comm}
+					case 7 {$ir_7 = $comm}
+					case 8 {$ir_8 = $comm}
+					case 9 {$ir_9 = $comm}
+					case '.' {$ir_Decimal = $comm}
+					case 'E' {$ir_Eject = $comm}
+					else {Log("Character $id not om use yet.")}
+				}
+			}
+		}
+	} else {
+	  Log("Unable to find STB file for $STBID");
+		exit(0);
+	}
+}
+######################################################################################################
+#
+#
+#
+sub BuildCommand{
+	
+	my $CommandLength = length($inCommand);
+	my $LineFeed = "\r\n";
+	$CommandToSend = '';
+	Log("Command legth: $CommandLength");
+	for($x = 0;$x<$CommandLength;$x++){
+		$CommandToSend = $CommandToSend . $SendIR_1 . $inInterfaceID . $SendIR_2;
+		my $char = substr($inCommand, $x ,1);
+		switch($char) {
+			case 0 {$CommandToSend = $CommandToSend . $ir_0 . $LineFeed }
+			case 1 {$CommandToSend = $CommandToSend . $ir_1 . $LineFeed }
+			case 2 {$CommandToSend = $CommandToSend . $ir_2 . $LineFeed }
+			case 3 {$CommandToSend = $CommandToSend . $ir_3 . $LineFeed }
+			case 4 {$CommandToSend = $CommandToSend . $ir_4 . $LineFeed }
+			case 5 {$CommandToSend = $CommandToSend . $ir_5 . $LineFeed }
+			case 6 {$CommandToSend = $CommandToSend . $ir_6 . $LineFeed }
+			case 7 {$CommandToSend = $CommandToSend . $ir_7 . $LineFeed }
+			case 8 {$CommandToSend = $CommandToSend . $ir_8 . $LineFeed }
+			case 9 {$CommandToSend = $CommandToSend . $ir_9 . $LineFeed }
+			case '.' {$CommandToSend = $CommandToSend . $ir_Decimal . $LineFeed }
+			case 'E' {$CommandToSend = $CommandToSend . $ir_Eject . $LineFeed }
+			else {Log("Character ". substr($inCommand, $x ,1)." Not Found.")}
+		}
+	}
+	$CommandToSend = $CommandToSend . $LineFeed;
+	Log("Command Built $CommandToSend");
+}
+######################################################################################################
+#
+#
+#
+sub BuildCommand2{
+	
+	my $CommandLength = length($inCommand);
+	my $LineFeed = "\r\n";
+	$CommandToSend = '';
+	Log("Command legth: $CommandLength");
+	for($x = 0;$x<$CommandLength;$x++){
+		$Commands[$x] = $SendIR_1 . $inInterfaceID . $SendIR_2;
+		my $char = substr($inCommand, $x ,1);
+		switch($char) {
+			case 0 {$Commands[$x]  =  $Commands[$x] . $ir_0 . $LineFeed }
+			case 1 {$Commands[$x]  =  $Commands[$x] .$ir_1 . $LineFeed }
+			case 2 {$Commands[$x]  =  $Commands[$x] .$ir_2 . $LineFeed }
+			case 3 {$Commands[$x]  =  $Commands[$x] .$ir_3 . $LineFeed }
+			case 4 {$Commands[$x]  =  $Commands[$x] .$ir_4 . $LineFeed }
+			case 5 {$Commands[$x]  =  $Commands[$x] .$ir_5 . $LineFeed }
+			case 6 {$Commands[$x]  =  $Commands[$x] .$ir_6 . $LineFeed }
+			case 7 {$Commands[$x]  =  $Commands[$x] .$ir_7 . $LineFeed }
+			case 8 {$Commands[$x]  =  $Commands[$x] .$ir_8 . $LineFeed }
+			case 9 {$Commands[$x]  =  $Commands[$x] .$ir_9 . $LineFeed }
+			case '.' {$Commands[$x]  =  $Commands[$x] .$ir_Decimal . $LineFeed }
+			case 'E' {$Commands[$x] =  $Commands[$x] .$ir_Eject . $LineFeed }
+			else {Log("Character ". substr($Commands[$x], $x ,1)." Not Found.")}
+		}
+	}
+	Log("Command Built ");
+	foreach $Command (@Commands){
+		Log("$Command");
+	}
+}
+######################################################################################################
+#
+#
+#
+sub SendCommand{
+	# create the socket, connect to the port
+	$proto = getprotobyname('tcp');
+
+	socket(SOCKET, PF_INET, SOCK_STREAM, $proto)
+   or die "Can't create a socket $!\n";
+
+#	$sockaddr = pack("S n a4 x8",  AF_INET,  $DevicePort, inet_aton($DeviceIP));
+	$sockaddr = sockaddr_in($DevicePort, inet_aton($DeviceIP));
+	connect( SOCKET, $sockaddr )
+       or die "Can't connect to $DeviceIP $DevicePort! \n";
+
+	autoflush SOCKET (1);
+
+	print( SOCKET $CommandToSend);
+
+	sleep 2;
+
+	close SOCKET or die "close: $!";
+}
+######################################################################################################
+#
+#
+#
+sub SendCommand2{
+	# create the socket, connect to the port
+	$proto = getprotobyname('tcp');
+
+	socket(SOCKET, PF_INET, SOCK_STREAM, $proto)
+   or die "Can't create a socket $!\n";
+
+#	$sockaddr = pack("S n a4 x8",  AF_INET,  $DevicePort, inet_aton($DeviceIP));
+	$sockaddr = sockaddr_in($DevicePort, inet_aton($DeviceIP));
+	connect( SOCKET, $sockaddr )
+       or die "Can't connect to $DeviceIP $DevicePort! \n";
+
+	autoflush SOCKET (1);
+
+	foreach $Command (@Commands){
+		
+		print( SOCKET $Command);
+		autoflush SOCKET (1);
+		sleep (1)
+	}
+
+	sleep 2;
+
+	close SOCKET or die "close: $!";
+}
+######################################################################################################
+#
+# 
+#
+sub Log {
+	if($Logging){
+		my($Line) = @_;
+		print ("$Line\n");
+	}
+}
+######################################################################################################

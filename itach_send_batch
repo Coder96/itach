@@ -1,0 +1,17 @@
+#!/usr/bin/perl
+
+#
+# This is where everything exists. change this if you move to differnet dir.
+#
+$myPath = $ARGV[0] ;
+chdir($myPath);
+
+$ProgramName = 'itach_send_ip';
+
+$Command = "$myPath/$ProgramName $ARGV[0] $ARGV[1] $ARGV[2] $ARGV[3] $ARGV[4] >$myPath/log.txt &";
+
+#print $Command."\n";
+#
+# Runs with exec as not to lock up the user interface.
+#
+system($Command);
