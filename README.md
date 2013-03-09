@@ -1,4 +1,4 @@
-mmpc
+itach
 ====
 
-My mythtv rss media downloader with web interface. This program downloads media from the internet ad adds them to you recorded list.
+For using iTach ip2ir device to control set tp boxes with  Mythtv
